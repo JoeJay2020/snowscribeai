@@ -1,0 +1,121 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // User profiles — users can read/write their own
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Credit wallets — users can read their own; writes via server only
+    match /creditWallets/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    // Credit transactions — users can read their own
+    match /creditTransactions/{transactionId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Subscriptions — users can read their own
+    match /subscriptions/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    // Documents — users can CRUD their own
+    match /documents/{docId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+
+      match /versions/{versionId} {
+        allow read: if isAuthenticated() &&
+          get(/databases/$(database)/documents/documents/$(docId)).data.userId == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // AI requests — users can read their own
+    match /aiRequests/{requestId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Assistant chat history — all writes via server APIs only
+    match /assistantThreads/{threadId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow write: if false;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+          get(/databases/$(database)/documents/assistantThreads/$(threadId)).data.userId == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // Growth loops — server-managed
+    match /referrals/{id} {
+      allow read, write: if false;
+    }
+
+    match /coupons/{code} {
+      allow read, write: if false;
+    }
+
+    match /couponRedemptions/{id} {
+      allow read, write: if false;
+    }
+
+    // Daily usage tracking — server only
+    match /dailyUsage/{docId} {
+      allow read, write: if false;
+    }
+
+    // Pending payments — server only
+    match /pendingPayments/{paymentId} {
+      allow read, write: if false;
+    }
+
+    // Admin-only collections
+    match /modelConfigs/{configId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /observabilityEvents/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+  }
+}
