@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu, X, Snowflake } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { APP_NAME, NAV_LINKS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
+  const [pathname, setPathname] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPathname(window.location.pathname);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-lg">

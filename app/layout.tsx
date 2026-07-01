@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
-import { Providers } from "@/components/providers";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-full flex flex-col antialiased font-sans">
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   );

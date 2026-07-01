@@ -365,7 +365,7 @@ export function AdminCouponsPanel() {
                         coupon.archived
                           ? "secondary"
                           : isExpired
-                            ? "destructive"
+                            ? "warning"
                             : coupon.active
                               ? "success"
                               : "secondary"

@@ -117,8 +117,8 @@ export function AdminIncidentFeedPanel() {
   );
 }
 
-function severityToBadge(severity: Severity): "success" | "destructive" | "secondary" {
+function severityToBadge(severity: Severity): "success" | "warning" | "secondary" {
   if (severity === "info") return "success";
   if (severity === "warning") return "secondary";
-  return "destructive";
+  return "warning";
 }

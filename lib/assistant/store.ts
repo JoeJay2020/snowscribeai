@@ -52,7 +52,7 @@ export async function listThreads(userId: string): Promise<AssistantThread[]> {
     .limit(30)
     .get();
 
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as AssistantThread[];
+  return snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as AssistantThread[];
 }
 
 export async function getThread(
@@ -64,7 +64,7 @@ export async function getThread(
   if (!doc.exists) return null;
   const data = doc.data() as AssistantThread;
   if (data.userId !== userId) return null;
-  return { id: doc.id, ...data };
+  return { ...data, id: doc.id };
 }
 
 export async function listMessages(
@@ -83,7 +83,7 @@ export async function listMessages(
     .limit(200)
     .get();
 
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as AssistantMessage[];
+  return snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as AssistantMessage[];
 }
 
 export async function addMessage(

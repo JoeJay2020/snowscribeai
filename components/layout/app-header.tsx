@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu, X, Snowflake, Sun, Moon, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { APP_NAME, NAV_LINKS } from "@/lib/constants";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useTheme } from "@/components/providers/theme-provider";
@@ -12,9 +11,13 @@ import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
+  const [pathname, setPathname] = useState<string | null>(null);
   const { user, loading, signOut } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setPathname(window.location.pathname);
+  }, []);
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");

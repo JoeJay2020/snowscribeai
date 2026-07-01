@@ -1,11 +1,10 @@
 import type { NextConfig } from "next";
-import type { Compiler, NormalModuleFactory } from "webpack";
 import fs from "fs";
 
-// Use the on-disk path casing so Webpack doesn't load duplicate React/Next modules
-// (Windows allows SnowScribe-ai vs snowscribe-ai, but Webpack treats them as different).
 const projectRoot = fs.realpathSync.native(process.cwd());
+const isWindows = process.platform === "win32";
 
+// Windows-only: normalize path casing so Webpack doesn't load duplicate React/Next modules.
 function normalizeWindowsPathCasing(root: string) {
   const rootLower = root.toLowerCase();
 
@@ -18,10 +17,28 @@ function normalizeWindowsPathCasing(root: string) {
   };
 
   return {
-    apply(compiler: Compiler) {
+    apply(compiler: {
+      hooks: {
+        normalModuleFactory: {
+          tap: (
+            name: string,
+            fn: (nmf: {
+              hooks: {
+                afterResolve: {
+                  tap: (
+                    name: string,
+                    handler: (result: { resource?: string; context?: string } | undefined) => void
+                  ) => void;
+                };
+              };
+            }) => void
+          ) => void;
+        };
+      };
+    }) {
       compiler.hooks.normalModuleFactory.tap(
         "NormalizeWindowsPathCasing",
-        (nmf: NormalModuleFactory) => {
+        (nmf) => {
           nmf.hooks.afterResolve.tap("NormalizeWindowsPathCasing", (result) => {
             if (!result) return;
             if (result.resource) result.resource = normalize(result.resource)!;
@@ -61,12 +78,14 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   webpack: (config) => {
-    config.context = projectRoot;
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@": projectRoot,
-    };
-    config.plugins.push(normalizeWindowsPathCasing(projectRoot));
+    if (isWindows) {
+      config.context = projectRoot;
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        "@": projectRoot,
+      };
+      config.plugins.push(normalizeWindowsPathCasing(projectRoot));
+    }
     return config;
   },
   async headers() {

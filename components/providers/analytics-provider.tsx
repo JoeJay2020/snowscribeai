@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 
 declare global {
   interface Window {
@@ -27,11 +26,9 @@ export function trackEvent(event: string, properties?: Record<string, unknown>) 
 }
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
   useEffect(() => {
-    trackEvent("page_view", { path: pathname });
-  }, [pathname]);
+    trackEvent("page_view", { path: window.location.pathname });
+  }, []);
 
   return <>{children}</>;
 }

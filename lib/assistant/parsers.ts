@@ -1,5 +1,5 @@
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 
 const MAX_PARSED_CHARS = 12_000;
 
@@ -35,8 +35,13 @@ export async function parseAttachment(
   let parsed = "";
 
   if (ext === "pdf" || mimeType.includes("pdf")) {
-    const output = await pdfParse(buffer);
-    parsed = output.text ?? "";
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const output = await parser.getText();
+      parsed = output.text ?? "";
+    } finally {
+      await parser.destroy();
+    }
   } else if (
     ext === "docx" ||
     mimeType.includes(
