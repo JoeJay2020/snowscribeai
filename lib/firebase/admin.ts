@@ -14,7 +14,13 @@ let adminDb: Firestore | undefined;
 
 function getServiceAccount() {
   if (serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    return JSON.parse(serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY);
+    try {
+      return JSON.parse(serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY);
+    } catch {
+      throw new Error(
+        "FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Paste the full service account file as a single line in Vercel."
+      );
+    }
   }
   return {
     projectId: serverEnv.FIREBASE_PROJECT_ID,
