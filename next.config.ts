@@ -79,7 +79,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      const existing = config.externals;
+      const packages = ["firebase-admin", "jwks-rsa", "jose"];
+      config.externals = [
+        ...(Array.isArray(existing) ? existing : [existing]).filter(Boolean),
+        ...packages,
+      ];
+    }
     if (isWindows) {
       config.context = projectRoot;
       config.resolve.alias = {
