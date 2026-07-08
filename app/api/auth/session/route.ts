@@ -6,6 +6,8 @@ import { SESSION_COOKIE_NAME, SESSION_COOKIE_MAX_AGE } from "@/lib/constants";
 import { isFirebaseAdminConfigured } from "@/lib/env/server";
 import { rateLimit, getClientIp } from "@/lib/security";
 
+export const runtime = "nodejs";
+
 const sessionSchema = z.object({
   idToken: z.string().min(1),
 });

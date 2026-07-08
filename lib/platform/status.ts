@@ -42,10 +42,19 @@ export async function getPlatformStatus(): Promise<PlatformStatusReport> {
         details: "Connected to Firestore.",
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Firestore check failed";
+      const invalidCredentials =
+        message.includes("private key") ||
+        message.includes("not valid JSON") ||
+        message.includes("DECODER") ||
+        message.includes("credential");
+
       services.push({
         name: "firebase-admin",
         state: "down",
-        details: error instanceof Error ? error.message : "Firestore check failed",
+        details: invalidCredentials
+          ? `Firebase Admin credentials are invalid: ${message}`
+          : message,
       });
     }
   }

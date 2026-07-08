@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getPlatformStatus } from "@/lib/platform/status";
+
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
+    const { getPlatformStatus } = await import("@/lib/platform/status");
     const report = await getPlatformStatus();
     const statusCode = report.overall === "down" ? 503 : 200;
     return NextResponse.json(report, { status: statusCode });
