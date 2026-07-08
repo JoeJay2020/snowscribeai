@@ -32,8 +32,12 @@ export default function RegisterPage() {
     try {
       await signUp(email, password, name);
       router.push("/dashboard");
-    } catch {
-      setError("Registration failed. Email may already be in use.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Email may already be in use."
+      );
     } finally {
       setLoading(false);
     }
@@ -45,8 +49,12 @@ export default function RegisterPage() {
     try {
       await signInWithGoogle();
       router.push("/dashboard");
-    } catch {
-      setError("Google sign-in failed. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Google sign-in failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }

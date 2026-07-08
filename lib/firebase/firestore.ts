@@ -71,15 +71,4 @@ export async function createUserProfile(
     createdAt: now,
     updatedAt: now,
   });
-
-  const renewsAt = new Date();
-  renewsAt.setMonth(renewsAt.getMonth() + 1);
-
-  await setDoc(doc(db, "creditWallets", uid), {
-    balance: PLANS.FREE.monthlyCredits,
-    monthlyAllocation: PLANS.FREE.monthlyCredits,
-    monthlyUsed: 0,
-    renewsAt: renewsAt.toISOString(),
-    updatedAt: now,
-  });
 }

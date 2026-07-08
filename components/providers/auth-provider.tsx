@@ -46,11 +46,21 @@ function mapUser(user: User): AuthUser {
 }
 
 async function establishSession(idToken: string): Promise<void> {
-  await fetch("/api/auth/session", {
+  const response = await fetch("/api/auth/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken }),
   });
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+    throw new Error(
+      data?.error ??
+        "Could not start your session. Check server auth configuration."
+    );
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

@@ -25,8 +25,12 @@ export function LoginForm({ redirect = "/dashboard" }: { redirect?: string }) {
     try {
       await signIn(email, password);
       router.push(redirect);
-    } catch {
-      setError("Invalid email or password. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Invalid email or password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -38,8 +42,12 @@ export function LoginForm({ redirect = "/dashboard" }: { redirect?: string }) {
     try {
       await signInWithGoogle();
       router.push(redirect);
-    } catch {
-      setError("Google sign-in failed. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Google sign-in failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
