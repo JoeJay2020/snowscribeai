@@ -44,6 +44,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+    const message =
+      error instanceof Error ? error.message : "Authentication failed";
+    const status = message.includes("not valid JSON") ||
+      message.includes("not configured")
+      ? 503
+      : 401;
+    return NextResponse.json({ error: message }, { status });
   }
 }

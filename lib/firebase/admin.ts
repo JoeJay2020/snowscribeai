@@ -12,13 +12,26 @@ let adminApp: App | undefined;
 let adminAuth: Auth | undefined;
 let adminDb: Firestore | undefined;
 
+function normalizeServiceAccountJson(raw: string): string {
+  let value = raw.trim();
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1);
+  }
+  return value.replace(/\r\n/g, "\\n").replace(/\n/g, "\\n");
+}
+
 function getServiceAccount() {
   if (serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY) {
     try {
-      return JSON.parse(serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY);
+      return JSON.parse(
+        normalizeServiceAccountJson(serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY)
+      );
     } catch {
       throw new Error(
-        "FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Paste the full service account file as a single line in Vercel."
+        "FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Use the 3-variable setup instead (recommended on Vercel)."
       );
     }
   }
