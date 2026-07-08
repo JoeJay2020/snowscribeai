@@ -74,6 +74,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   outputFileTracingRoot: projectRoot,
+  // Keep Firebase Admin and JWT deps external so Vercel Node runtime loads them natively.
+  serverExternalPackages: ["firebase-admin", "jwks-rsa", "jose"],
   turbopack: {
     root: projectRoot,
   },
