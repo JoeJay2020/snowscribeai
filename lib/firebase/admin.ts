@@ -20,7 +20,7 @@ function normalizeServiceAccountJson(raw: string): string {
   ) {
     value = value.slice(1, -1);
   }
-  return value.replace(/\r\n/g, "\\n").replace(/\n/g, "\\n");
+  return value;
 }
 
 function getServiceAccount() {
