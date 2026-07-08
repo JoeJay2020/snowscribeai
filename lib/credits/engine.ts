@@ -33,6 +33,33 @@ export async function getWallet(userId: string): Promise<CreditWallet | null> {
   };
 }
 
+export async function ensureWallet(userId: string): Promise<CreditWallet> {
+  const existing = await getWallet(userId);
+  if (existing) return existing;
+
+  const db = getAdminDb();
+  const now = new Date().toISOString();
+  const renewsAt = new Date();
+  renewsAt.setMonth(renewsAt.getMonth() + 1);
+
+  await db.collection("creditWallets").doc(userId).set({
+    balance: PLANS.FREE.monthlyCredits,
+    monthlyAllocation: PLANS.FREE.monthlyCredits,
+    monthlyUsed: 0,
+    renewsAt: renewsAt.toISOString(),
+    updatedAt: now,
+  });
+
+  return {
+    userId,
+    balance: PLANS.FREE.monthlyCredits,
+    monthlyAllocation: PLANS.FREE.monthlyCredits,
+    monthlyUsed: 0,
+    renewsAt: renewsAt.toISOString(),
+    updatedAt: now,
+  };
+}
+
 export async function checkAndDeductCredits(
   userId: string,
   amount: number,
@@ -44,17 +71,29 @@ export async function checkAndDeductCredits(
   return db.runTransaction(async (transaction) => {
     const walletRef = db.collection("creditWallets").doc(userId);
     const userRef = db.collection("users").doc(userId);
-    const walletDoc = await transaction.get(walletRef);
+    let walletDoc = await transaction.get(walletRef);
     const userDoc = await transaction.get(userRef);
 
+    let balance: number;
     if (!walletDoc.exists) {
-      throw new Error("Credit wallet not found");
+      const now = new Date().toISOString();
+      const renewsAt = new Date();
+      renewsAt.setMonth(renewsAt.getMonth() + 1);
+      const initialWallet = {
+        balance: PLANS.FREE.monthlyCredits,
+        monthlyAllocation: PLANS.FREE.monthlyCredits,
+        monthlyUsed: 0,
+        renewsAt: renewsAt.toISOString(),
+        updatedAt: now,
+      };
+      transaction.set(walletRef, initialWallet);
+      balance = initialWallet.balance;
+    } else {
+      balance = walletDoc.data()!.balance ?? 0;
     }
 
-    const wallet = walletDoc.data()!;
     const plan = (userDoc.data()?.plan as PlanId) ?? "FREE";
     const planConfig = PLANS[plan];
-    const balance = wallet.balance ?? 0;
 
     if (balance < amount) {
       throw new InsufficientCreditsError(amount, balance);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getSessionUser } from "@/lib/firebase/auth";
+import { ensureUserProvisioned } from "@/lib/auth/provision-user";
 import { getToolDefinition } from "@/lib/tools";
 import { ToolWorkspace } from "@/components/tools/tool-workspace";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,12 @@ interface ToolPageProps {
 export default async function ToolPage({ params }: ToolPageProps) {
   const { slug } = await params;
   const tool = getToolDefinition(slug);
-  const user = await getSessionUser();
+  let user = await getSessionUser();
+
+  if (user) {
+    await ensureUserProvisioned(user.uid, user.email, user.displayName);
+    user = await getSessionUser();
+  }
 
   if (!tool) {
     return (

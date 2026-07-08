@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Coins, FileText, Sparkles, ArrowRight, MessageSquare } from "lucide-react";
 import { getSessionUser } from "@/lib/firebase/auth";
+import { ensureUserProvisioned } from "@/lib/auth/provision-user";
 import { countDocuments } from "@/lib/documents/store";
 import { isFirebaseAdminConfigured } from "@/lib/env/server";
 import { FLAGSHIP_TOOLS, PLANS } from "@/lib/constants";
@@ -14,7 +15,11 @@ import { RewardsPanel } from "@/components/growth/rewards-panel";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const user = await getSessionUser();
+  let user = await getSessionUser();
+  if (user) {
+    await ensureUserProvisioned(user.uid, user.email, user.displayName);
+    user = await getSessionUser();
+  }
   let docCount = 0;
   if (user && isFirebaseAdminConfigured()) {
     try {
@@ -45,7 +50,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCredits(user?.credits ?? PLANS.FREE.monthlyCredits)}
+              {formatCredits(user?.credits ?? 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {PLANS[user?.plan ?? "FREE"].name} plan

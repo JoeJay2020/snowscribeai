@@ -51,6 +51,10 @@ export function ToolWorkspace({ tool, initialCredits }: ToolWorkspaceProps) {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setError("Your session expired. Please sign in again.");
+          return;
+        }
         if (data.code === "INSUFFICIENT_CREDITS") {
           setError(`Not enough credits. This tool requires ${tool.creditCost} credits.`);
         } else if (data.code === "DAILY_LIMIT") {

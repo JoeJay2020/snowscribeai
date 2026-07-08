@@ -4,7 +4,7 @@ import { requireAuth, isErrorResponse } from "@/lib/api/auth";
 import { routeAndGenerate } from "@/lib/ai/router";
 import {
   checkAndDeductCredits,
-  getWallet,
+  ensureWallet,
   InsufficientCreditsError,
   DailyLimitError,
 } from "@/lib/credits/engine";
@@ -13,6 +13,8 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { isOpenRouterConfigured } from "@/lib/env/server";
 import { rateLimit, getClientIp, sanitizeInput } from "@/lib/security";
 import { reportError } from "@/lib/observability/events";
+
+export const runtime = "nodejs";
 
 const generateSchema = z.object({
   toolId: z.string().min(1),
@@ -54,11 +56,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const wallet = await getWallet(user.uid);
-    if (!wallet || wallet.balance < tool.creditCost) {
+    const wallet = await ensureWallet(user.uid);
+    if (wallet.balance < tool.creditCost) {
       return NextResponse.json(
         {
-          error: `Insufficient credits: need ${tool.creditCost}, have ${wallet?.balance ?? 0}`,
+          error: `Insufficient credits: need ${tool.creditCost}, have ${wallet.balance}`,
           code: "INSUFFICIENT_CREDITS",
         },
         { status: 402 }
