@@ -2,8 +2,8 @@ import { TOOL_DEFINITIONS, type ToolDefinition } from "./definitions";
 import { ACADEMIC_TOOL_DEFINITIONS } from "./academic-tools";
 import { WRITING_TOOL_DEFINITIONS } from "./writing-tools";
 
-export type { ToolDefinition, ToolField } from "./definitions";
-export { TOOL_DEFINITIONS } from "./definitions";
+export type { ToolDefinition, ToolField, ToolWorkspaceConfig } from "./definitions";
+export { TOOL_DEFINITIONS, toToolWorkspaceConfig } from "./definitions";
 
 const ALL_TOOLS: Record<string, ToolDefinition> = {
   ...TOOL_DEFINITIONS,

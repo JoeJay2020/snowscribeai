@@ -12,7 +12,7 @@ import {
   Coins,
   AlertCircle,
 } from "lucide-react";
-import type { ToolDefinition } from "@/lib/tools/definitions";
+import type { ToolWorkspaceConfig } from "@/lib/tools/definitions";
 import { loginHrefForPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 interface ToolWorkspaceProps {
-  tool: ToolDefinition;
+  tool: ToolWorkspaceConfig;
   initialCredits?: number;
 }
 

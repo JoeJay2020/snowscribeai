@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getSessionUser } from "@/lib/firebase/auth";
 import { ensureUserProvisioned } from "@/lib/auth/provision-user";
-import { getToolDefinition } from "@/lib/tools";
+import { getToolDefinition, toToolWorkspaceConfig } from "@/lib/tools";
 import { ToolWorkspace } from "@/components/tools/tool-workspace";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,10 @@ export default async function ToolPage({ params }: ToolPageProps) {
         <p className="text-muted-foreground mt-1">{tool.description}</p>
       </div>
 
-      <ToolWorkspace tool={tool} initialCredits={user?.credits} />
+      <ToolWorkspace
+        tool={toToolWorkspaceConfig(tool)}
+        initialCredits={user?.credits}
+      />
     </div>
   );
 }

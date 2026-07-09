@@ -17,6 +17,22 @@ export interface ToolDefinition {
   buildUserPrompt: (inputs: Record<string, string>) => string;
 }
 
+/** Serializable subset safe to pass from Server Components to client UI. */
+export type ToolWorkspaceConfig = Pick<
+  ToolDefinition,
+  "id" | "name" | "description" | "creditCost" | "fields"
+>;
+
+export function toToolWorkspaceConfig(tool: ToolDefinition): ToolWorkspaceConfig {
+  return {
+    id: tool.id,
+    name: tool.name,
+    description: tool.description,
+    creditCost: tool.creditCost,
+    fields: tool.fields,
+  };
+}
+
 export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   "research-proposal": {
     id: "research-proposal",
