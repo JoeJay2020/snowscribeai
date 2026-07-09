@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { loginHrefForPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 
 export function CTA() {
@@ -23,7 +24,7 @@ export function CTA() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/tools/research-proposal">
+              <Link href={loginHrefForPath("/tools/research-proposal")}>
                 <Button
                   size="lg"
                   variant="outline"

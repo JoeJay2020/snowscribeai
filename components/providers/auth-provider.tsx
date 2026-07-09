@@ -50,6 +50,7 @@ async function establishSession(idToken: string): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken }),
+    credentials: "same-origin",
   });
 
   if (!response.ok) {
@@ -60,6 +61,14 @@ async function establishSession(idToken: string): Promise<void> {
       data?.error ??
         "Could not start your session. Check server auth configuration."
     );
+  }
+}
+
+async function clearServerSession(): Promise<void> {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+  } catch {
+    // Best effort
   }
 }
 
@@ -76,14 +85,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(mapUser(firebaseUser));
-        const token = await firebaseUser.getIdToken();
-        await establishSession(token);
-      } else {
+      try {
+        if (firebaseUser) {
+          setUser(mapUser(firebaseUser));
+          const token = await firebaseUser.getIdToken(true);
+          await establishSession(token);
+        } else {
+          setUser(null);
+        }
+      } catch {
         setUser(null);
+        await clearServerSession();
+        try {
+          await firebaseSignOut(auth);
+        } catch {
+          // Ignore sign-out errors
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return unsubscribe;
@@ -92,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const auth = getFirebaseAuth();
     const result = await signInWithEmailAndPassword(auth, email, password);
-    const token = await result.user.getIdToken();
+    const token = await result.user.getIdToken(true);
     await establishSession(token);
   }, []);
 
@@ -102,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName });
       await createUserProfile(result.user.uid, email, displayName);
-      const token = await result.user.getIdToken();
+      const token = await result.user.getIdToken(true);
       await establishSession(token);
     },
     []
@@ -119,12 +139,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         result.user.displayName
       );
     }
-    const token = await result.user.getIdToken();
+    const token = await result.user.getIdToken(true);
     await establishSession(token);
   }, []);
 
   const signOut = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await clearServerSession();
     const auth = getFirebaseAuth();
     await firebaseSignOut(auth);
     setUser(null);

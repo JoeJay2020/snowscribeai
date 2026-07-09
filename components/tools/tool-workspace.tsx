@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ExportMenu } from "@/components/export/export-menu";
 import {
   Save,
@@ -12,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { ToolDefinition } from "@/lib/tools/definitions";
+import { loginHrefForPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,8 +40,16 @@ export function ToolWorkspace({ tool, initialCredits }: ToolWorkspaceProps) {
 
   const handleGenerate = async () => {
     setError("");
-    setLoading(true);
     setOutput("");
+
+    for (const field of tool.fields) {
+      if (field.required && !inputs[field.id]?.trim()) {
+        setError(`${field.label} is required.`);
+        return;
+      }
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch("/api/ai/generate", {
@@ -52,7 +62,9 @@ export function ToolWorkspace({ tool, initialCredits }: ToolWorkspaceProps) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          setError("Your session expired. Please sign in again.");
+          setError(
+            "Your session expired. Please sign in again to use this tool."
+          );
           return;
         }
         if (data.code === "INSUFFICIENT_CREDITS") {
@@ -140,9 +152,18 @@ export function ToolWorkspace({ tool, initialCredits }: ToolWorkspaceProps) {
           )}
 
           {error && (
-            <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              {error}
+            <div className="flex flex-col gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+              {error.includes("session expired") && (
+                <Link href={loginHrefForPath(`/tools/${tool.id}`)}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Sign in again
+                  </Button>
+                </Link>
+              )}
             </div>
           )}
 
@@ -192,13 +213,24 @@ export function ToolWorkspace({ tool, initialCredits }: ToolWorkspaceProps) {
                   size="sm"
                   className="gap-1 text-xs"
                   onClick={async () => {
-                    await fetch("/api/documents", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ title: tool.name, content: `<p>${output.replace(/\n/g, "</p><p>")}</p>` }),
-                    }).then((r) => r.json()).then((d) => {
-                      if (d.id) window.location.href = `/workspace/${d.id}`;
-                    });
+                    try {
+                      const response = await fetch("/api/documents", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          title: tool.name,
+                          content: `<p>${output.replace(/\n/g, "</p><p>")}</p>`,
+                        }),
+                      });
+                      const data = await response.json();
+                      if (!response.ok) {
+                        setError(data.error ?? "Could not save to workspace.");
+                        return;
+                      }
+                      if (data.id) window.location.href = `/workspace/${data.id}`;
+                    } catch {
+                      setError("Could not save to workspace. Please try again.");
+                    }
                   }}
                 >
                   <Save className="h-3.5 w-3.5" />

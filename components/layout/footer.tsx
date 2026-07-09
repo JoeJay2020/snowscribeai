@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Snowflake } from "lucide-react";
+import { loginHrefForPath } from "@/lib/auth/redirect";
 import { APP_NAME, NAV_LINKS } from "@/lib/constants";
 
 export function Footer() {
@@ -35,9 +36,9 @@ export function Footer() {
           <div>
             <h4 className="mb-3 text-sm font-semibold">Academic Tools</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/tools/research-proposal" className="hover:text-foreground transition-colors">Research Proposal</Link></li>
-              <li><Link href="/tools/literature-review" className="hover:text-foreground transition-colors">Literature Review</Link></li>
-              <li><Link href="/tools/dissertation" className="hover:text-foreground transition-colors">Dissertation Assistant</Link></li>
+              <li><Link href={loginHrefForPath("/tools/research-proposal")} className="hover:text-foreground transition-colors">Research Proposal</Link></li>
+              <li><Link href={loginHrefForPath("/tools/literature-review")} className="hover:text-foreground transition-colors">Literature Review</Link></li>
+              <li><Link href={loginHrefForPath("/tools/dissertation")} className="hover:text-foreground transition-colors">Dissertation Assistant</Link></li>
             </ul>
           </div>
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth, isErrorResponse } from "@/lib/api/auth";
 import { routeAndGenerate } from "@/lib/ai/router";
 import {
+  addCredits,
   checkAndDeductCredits,
   ensureWallet,
   InsufficientCreditsError,
@@ -15,6 +16,7 @@ import { rateLimit, getClientIp, sanitizeInput } from "@/lib/security";
 import { reportError } from "@/lib/observability/events";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const generateSchema = z.object({
   toolId: z.string().min(1),
@@ -38,14 +40,22 @@ export async function POST(request: NextRequest) {
   const user = await requireAuth();
   if (isErrorResponse(user)) return user;
 
+  let toolId = "";
+  let creditCost = 0;
+  let creditsDeducted = false;
+
   try {
     const body = await request.json();
-    const { toolId, inputs } = generateSchema.parse(body);
+    const parsed = generateSchema.parse(body);
+    toolId = parsed.toolId;
+    const { inputs } = parsed;
 
     const tool = getToolDefinition(toolId);
     if (!tool) {
       return NextResponse.json({ error: "Unknown tool" }, { status: 400 });
     }
+
+    creditCost = tool.creditCost;
 
     for (const field of tool.fields) {
       if (field.required && !inputs[field.id]?.trim()) {
@@ -72,6 +82,14 @@ export async function POST(request: NextRequest) {
       sanitizedInputs[key] = sanitizeInput(value, 10_000);
     }
 
+    const { newBalance, transactionId } = await checkAndDeductCredits(
+      user.uid,
+      tool.creditCost,
+      toolId,
+      `${tool.name} generation`
+    );
+    creditsDeducted = true;
+
     const userPrompt = tool.buildUserPrompt(sanitizedInputs);
     const result = await routeAndGenerate(
       toolId,
@@ -80,12 +98,9 @@ export async function POST(request: NextRequest) {
       userPrompt
     );
 
-    const { newBalance, transactionId } = await checkAndDeductCredits(
-      user.uid,
-      tool.creditCost,
-      toolId,
-      `${tool.name} generation`
-    );
+    if (!result.content?.trim()) {
+      throw new Error("AI returned empty content");
+    }
 
     const db = getAdminDb();
     const requestRef = await db.collection("aiRequests").add({
@@ -110,6 +125,19 @@ export async function POST(request: NextRequest) {
       requestId: requestRef.id,
     });
   } catch (error) {
+    if (creditsDeducted && creditCost > 0) {
+      try {
+        await addCredits(
+          user.uid,
+          creditCost,
+          "refund",
+          `Refund: ${toolId || "tool"} generation failed`
+        );
+      } catch {
+        // Refund failure is logged separately if needed
+      }
+    }
+
     if (error instanceof InsufficientCreditsError) {
       return NextResponse.json(
         { error: error.message, code: "INSUFFICIENT_CREDITS" },
@@ -134,11 +162,17 @@ export async function POST(request: NextRequest) {
       error,
       metadata: {
         ip,
+        toolId,
+        refunded: creditsDeducted,
       },
       alert: true,
     });
     return NextResponse.json(
-      { error: "Generation failed. No credits were deducted." },
+      {
+        error: creditsDeducted
+          ? "Generation failed. Your credits were refunded."
+          : "Generation failed. No credits were deducted.",
+      },
       { status: 500 }
     );
   }

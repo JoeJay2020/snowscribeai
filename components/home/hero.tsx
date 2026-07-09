@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { loginHrefForPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -29,13 +30,13 @@ export function Hero() {
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/tools/research-proposal">
+            <Link href={loginHrefForPath("/tools/research-proposal")}>
               <Button size="lg" className="gap-2">
                 Try Research Proposal Generator
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/tools/literature-review">
+            <Link href={loginHrefForPath("/tools/literature-review")}>
               <Button variant="outline" size="lg">
                 See Literature Review Tool
               </Button>

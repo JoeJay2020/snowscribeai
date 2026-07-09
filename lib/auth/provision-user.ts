@@ -1,44 +1,56 @@
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { PLANS } from "@/lib/constants";
+import { reportError } from "@/lib/observability/events";
 
 export async function ensureUserProvisioned(
   uid: string,
   email: string | null,
   displayName: string | null
 ): Promise<void> {
-  const db = getAdminDb();
-  const userRef = db.collection("users").doc(uid);
-  const walletRef = db.collection("creditWallets").doc(uid);
-  const now = new Date().toISOString();
+  try {
+    const db = getAdminDb();
+    const userRef = db.collection("users").doc(uid);
+    const walletRef = db.collection("creditWallets").doc(uid);
+    const now = new Date().toISOString();
 
-  const [userDoc, walletDoc] = await Promise.all([
-    userRef.get(),
-    walletRef.get(),
-  ]);
+    const [userDoc, walletDoc] = await Promise.all([
+      userRef.get(),
+      walletRef.get(),
+    ]);
 
-  if (!userDoc.exists) {
-    await userRef.set({
-      email: email ?? "",
-      displayName: displayName ?? email?.split("@")[0] ?? "User",
-      photoURL: null,
-      plan: "FREE",
-      role: "user",
-      onboardingComplete: false,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
+    if (!userDoc.exists) {
+      await userRef.set({
+        email: email ?? "",
+        displayName: displayName ?? email?.split("@")[0] ?? "User",
+        photoURL: null,
+        plan: "FREE",
+        role: "user",
+        onboardingComplete: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
-  if (!walletDoc.exists) {
-    const renewsAt = new Date();
-    renewsAt.setMonth(renewsAt.getMonth() + 1);
+    if (!walletDoc.exists) {
+      const renewsAt = new Date();
+      renewsAt.setMonth(renewsAt.getMonth() + 1);
 
-    await walletRef.set({
-      balance: PLANS.FREE.monthlyCredits,
-      monthlyAllocation: PLANS.FREE.monthlyCredits,
-      monthlyUsed: 0,
-      renewsAt: renewsAt.toISOString(),
-      updatedAt: now,
+      await walletRef.set({
+        balance: PLANS.FREE.monthlyCredits,
+        monthlyAllocation: PLANS.FREE.monthlyCredits,
+        monthlyUsed: 0,
+        renewsAt: renewsAt.toISOString(),
+        updatedAt: now,
+      });
+    }
+  } catch (error) {
+    await reportError({
+      type: "user_provision_failed",
+      source: "lib/auth/provision-user",
+      message: "Failed to provision user profile or wallet.",
+      userId: uid,
+      error,
+      alert: false,
     });
   }
 }

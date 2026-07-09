@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu, X, Snowflake } from "lucide-react";
 import { useEffect, useState } from "react";
+import { loginHrefForPath } from "@/lib/auth/redirect";
 import { APP_NAME, NAV_LINKS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ export function Header() {
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
-              href={link.href}
+              href={link.href === "/tools" ? loginHrefForPath("/tools") : link.href}
               className={cn(
                 "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
                 pathname === link.href
@@ -68,7 +69,7 @@ export function Header() {
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={link.href === "/tools" ? loginHrefForPath("/tools") : link.href}
                 className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary"
                 onClick={() => setMobileOpen(false)}
               >
