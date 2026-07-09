@@ -1,5 +1,6 @@
 import { getAdminDb } from "@/lib/firebase/admin";
 import { isFirebaseAdminConfigured, isOpenRouterConfigured, serverEnv } from "@/lib/env/server";
+import { probeOpenRouter } from "@/lib/ai/openrouter";
 
 export type ServiceState = "healthy" | "degraded" | "down" | "not_configured";
 
@@ -60,13 +61,36 @@ export async function getPlatformStatus(): Promise<PlatformStatusReport> {
   }
 
   // OpenRouter
-  services.push({
-    name: "openrouter",
-    state: isOpenRouterConfigured() ? "healthy" : "not_configured",
-    details: isOpenRouterConfigured()
-      ? "OPENROUTER_API_KEY present."
-      : "OPENROUTER_API_KEY is missing.",
-  });
+  if (!isOpenRouterConfigured()) {
+    services.push({
+      name: "openrouter",
+      state: "not_configured",
+      details: "OPENROUTER_API_KEY is missing.",
+    });
+  } else {
+    try {
+      await probeOpenRouter();
+      services.push({
+        name: "openrouter",
+        state: "healthy",
+        details: "OpenRouter API responded successfully.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "OpenRouter probe failed";
+      const needsCredits =
+        message.includes("402") ||
+        message.toLowerCase().includes("more credits") ||
+        message.toLowerCase().includes("can only afford");
+
+      services.push({
+        name: "openrouter",
+        state: needsCredits ? "degraded" : "down",
+        details: needsCredits
+          ? "OpenRouter key works but has low credits. Affordable models are used automatically."
+          : message,
+      });
+    }
+  }
 
   // Pesepay
   const pesepayConfigured = Boolean(

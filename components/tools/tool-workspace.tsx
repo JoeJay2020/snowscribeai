@@ -72,7 +72,12 @@ export function ToolWorkspace({ tool, initialCredits }: ToolWorkspaceProps) {
         } else if (data.code === "DAILY_LIMIT") {
           setError("Daily limit reached. Upgrade your plan for more requests.");
         } else {
-          setError(data.error ?? "Generation failed");
+          const base = data.error ?? "Generation failed";
+          setError(
+            data.refunded
+              ? `${base} Your credits were refunded.`
+              : base
+          );
         }
         return;
       }

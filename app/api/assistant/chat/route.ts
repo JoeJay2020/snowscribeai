@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuth, isErrorResponse } from "@/lib/api/auth";
 import { routeAndGenerate } from "@/lib/ai/router";
+import { getUserFacingAiError } from "@/lib/ai/openrouter";
 import {
   checkAndDeductCredits,
   getWallet,
@@ -128,7 +129,8 @@ export async function POST(request: NextRequest) {
       "assistant-chat",
       { message, attachmentCount: String(attachments.length) },
       systemPrompt,
-      userPrompt
+      userPrompt,
+      { plan: user.plan }
     );
 
     const { newBalance, transactionId } = await checkAndDeductCredits(
@@ -207,7 +209,7 @@ export async function POST(request: NextRequest) {
       alert: true,
     });
     return NextResponse.json(
-      { error: "Assistant failed. No credits were deducted." },
+      { error: getUserFacingAiError(error), code: "ASSISTANT_FAILED" },
       { status: 500 }
     );
   }

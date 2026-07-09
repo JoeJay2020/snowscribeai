@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuth, isErrorResponse } from "@/lib/api/auth";
 import { routeAndGenerate } from "@/lib/ai/router";
+import { getUserFacingAiError } from "@/lib/ai/openrouter";
 import {
   addCredits,
   checkAndDeductCredits,
@@ -95,34 +96,49 @@ export async function POST(request: NextRequest) {
       toolId,
       sanitizedInputs,
       tool.systemPrompt,
-      userPrompt
+      userPrompt,
+      { plan: user.plan }
     );
 
     if (!result.content?.trim()) {
       throw new Error("AI returned empty content");
     }
 
-    const db = getAdminDb();
-    const requestRef = await db.collection("aiRequests").add({
-      userId: user.uid,
-      toolId,
-      taskType: result.tier,
-      modelUsed: result.modelUsed,
-      creditsConsumed: tool.creditCost,
-      tokensIn: result.tokensIn,
-      tokensOut: result.tokensOut,
-      costUsd: result.costUsd,
-      status: "completed",
-      creditTransactionId: transactionId,
-      createdAt: new Date().toISOString(),
-    });
+    let requestId: string | null = null;
+    try {
+      const db = getAdminDb();
+      const requestRef = await db.collection("aiRequests").add({
+        userId: user.uid,
+        toolId,
+        taskType: result.tier,
+        modelUsed: result.modelUsed,
+        creditsConsumed: tool.creditCost,
+        tokensIn: result.tokensIn,
+        tokensOut: result.tokensOut,
+        costUsd: result.costUsd,
+        status: "completed",
+        creditTransactionId: transactionId,
+        createdAt: new Date().toISOString(),
+      });
+      requestId = requestRef.id;
+    } catch (logError) {
+      await reportError({
+        type: "ai_request_log_failed",
+        source: "api/ai/generate",
+        message: "Generation succeeded but request logging failed.",
+        userId: user.uid,
+        error: logError,
+        metadata: { toolId },
+        alert: false,
+      });
+    }
 
     return NextResponse.json({
       content: result.content,
       creditsUsed: tool.creditCost,
       creditsRemaining: newBalance,
       modelUsed: result.modelUsed,
-      requestId: requestRef.id,
+      requestId,
     });
   } catch (error) {
     if (creditsDeducted && creditCost > 0) {
@@ -169,9 +185,9 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(
       {
-        error: creditsDeducted
-          ? "Generation failed. Your credits were refunded."
-          : "Generation failed. No credits were deducted.",
+        error: getUserFacingAiError(error),
+        code: "GENERATION_FAILED",
+        refunded: creditsDeducted,
       },
       { status: 500 }
     );
