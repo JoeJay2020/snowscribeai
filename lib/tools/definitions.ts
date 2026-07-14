@@ -71,7 +71,7 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
         required: false,
       },
     ],
-    systemPrompt: `You are an expert academic research advisor specializing in research proposal writing for African universities and international institutions. Write in formal academic English. Use proper APA-style in-text citations where relevant (Author, Year format). Structure output clearly with numbered sections and subsections.`,
+    systemPrompt: `You are an expert academic research advisor specializing in research proposal writing for African universities and international institutions (including University of Zimbabwe, UCT, and peers), as well as leading global universities. Write in formal academic English at Distinction / First Class standard. Use APA 7th edition. Structure output with clear Markdown headings. Never fabricate references.`,
     buildUserPrompt: (inputs) =>
       `Generate a complete research proposal for the following:
 
@@ -80,23 +80,9 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
 **Degree Level:** ${inputs.degree}
 ${inputs.context ? `**Additional Context:** ${inputs.context}` : ""}
 
-Include these sections:
-1. Title Page (title, researcher placeholder, institution placeholder, date)
-2. Abstract (250 words)
-3. Introduction & Background
-4. Problem Statement
-5. Research Objectives (general and specific)
-6. Research Questions
-7. Significance of the Study
-8. Literature Review Summary (key themes, not exhaustive)
-9. Theoretical/Conceptual Framework
-10. Research Methodology (design, population, sampling, data collection, analysis)
-11. Ethical Considerations
-12. Timeline (Gantt-style table in markdown)
-13. Budget Estimate (table format)
-14. References (at least 10 credible sources in APA format)
+Deliver a full proposal with front matter, Chapter One (introduction scaffolding), Chapter Two (literature + theoretical/conceptual framework + research gaps), Chapter Three (methodology with WHAT/WHY/HOW), timeline, budget, and a real APA 7th reference list (prefer 2021–2025 sources).
 
-Make it comprehensive, academically rigorous, and appropriate for the ${inputs.degree} level.`,
+Literature must synthesise broadly across related industries where appropriate, then contextualise to the focal sector/geography. Include conceptual framework diagram(s) in Markdown when helpful.`,
   },
 
   "literature-review": {
@@ -135,7 +121,7 @@ Make it comprehensive, academically rigorous, and appropriate for the ${inputs.d
         required: false,
       },
     ],
-    systemPrompt: `You are an expert academic literature reviewer. Write comprehensive, critical literature reviews that synthesize research thematically (not study-by-study). Use APA citation style. Identify gaps in the literature. Write in formal academic English suitable for thesis or journal submission.`,
+    systemPrompt: `You are an expert academic literature reviewer. Write Distinction-level thematic literature reviews that synthesise (not list) scholarship. Use APA 7th. Identify methodological, geographical, contextual, theoretical, knowledge, and practical gaps. Never fabricate references.`,
     buildUserPrompt: (inputs) =>
       `Write a comprehensive literature review on:
 
@@ -146,16 +132,15 @@ ${inputs.themes ? `**Key Themes:** ${inputs.themes}` : ""}
 
 Structure:
 1. Introduction (scope, purpose, search strategy description)
-2. Thematic Section 1 (with critical analysis, not just description)
-3. Thematic Section 2
-4. Thematic Section 3
-5. Thematic Section 4 (if applicable)
-6. Summary & Synthesis
-7. Research Gaps Identified (bullet list)
-8. Conceptual Framework (describe relationships between key concepts)
-9. References (15-20 credible academic sources in APA format)
+2. Conceptualisation of key constructs
+3–6. Thematic synthesised sections with critical analysis, debates, and consensus
+7. Empirical synthesis across contexts (Author, Year, Country, Method, Sample, Findings where possible)
+8. Research Gaps (methodological, geographical, contextual, theoretical, knowledge, practical)
+9. Conceptual framework description (+ Markdown diagram if helpful)
+10. Conclusion
+11. References (15–25 real scholarly sources in APA 7th; prefer 2021–2025)
 
-Critically analyze studies — compare methodologies, findings, and limitations. Do not just summarize.`,
+Critically compare studies — do not produce annotated-bibliography style summaries.`,
   },
 
   dissertation: {
@@ -202,7 +187,7 @@ Critically analyze studies — compare methodologies, findings, and limitations.
         required: true,
       },
     ],
-    systemPrompt: `You are an expert dissertation advisor and academic writer. Write at PhD/Masters level with formal academic tone. Use APA 7th edition citation style. Include appropriate transitions, topic sentences, and evidence-based arguments. Write comprehensive chapter content, not outlines.`,
+    systemPrompt: `You are an expert dissertation advisor and academic writer. Write at Masters/PhD Distinction standard with formal scholarly tone. Use APA 7th. Include transitions, topic sentences, and evidence-based arguments. Never fabricate references. Write comprehensive chapter content, not outlines.`,
     buildUserPrompt: (inputs) =>
       `Write the following dissertation chapter:
 
@@ -212,13 +197,15 @@ Critically analyze studies — compare methodologies, findings, and limitations.
 **Research Context:** ${inputs.context}
 
 Requirements:
-- Write the FULL chapter content (3000-5000 words where appropriate)
-- Use formal academic language
+- Write the FULL chapter content (3000–5000 words where appropriate)
+- Use formal academic language and varied scholarly attribution
 - Include proper section headings and subheadings
-- Support arguments with citations (APA format)
+- Support arguments with REAL citations (APA 7th); prefer 2021–2025 literature
+- For Chapter 2: synthesise literature and identify research gaps explicitly
+- For Chapter 3: explain WHAT/WHY/HOW for every methodological choice
 - Include a brief chapter summary at the end
-- Add a References section with relevant academic sources
+- Add a References section listing only works actually cited
 
-Write as if this is a submission-ready draft that the student will refine.`,
+Write as a submission-ready draft the candidate will refine.`,
   },
 };

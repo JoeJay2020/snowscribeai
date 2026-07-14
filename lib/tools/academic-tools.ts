@@ -1,6 +1,6 @@
 import type { ToolDefinition } from "./definitions";
 
-const academicSystemPrompt = `You are an expert academic research advisor. Write in formal academic English suitable for thesis and dissertation work. Use APA citation style where references are needed. Be precise, rigorous, and structured.`;
+const academicSystemPrompt = `You are an expert academic research advisor. Write in formal academic English suitable for thesis and dissertation work at Distinction / First Class standard. Use APA 7th citation style where references are needed. Be precise, rigorous, and structured. Never fabricate references, statistics, or study findings. Prefer recent scholarly sources (2021–2025) from recognised repositories.`;
 
 export const ACADEMIC_TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   "abstract-generator": {

@@ -6,6 +6,7 @@ import {
   getModelsForPlanAndTier,
   isValidModelConfig,
 } from "./models";
+import { enhanceAcademicPrompts } from "@/lib/research";
 import { resolveTaskTier } from "./classifier";
 import { callOpenRouter, calculateCost } from "./openrouter";
 import type { ModelConfig, AIRouterResult } from "@/types/ai";
@@ -59,9 +60,17 @@ export async function routeAndGenerate(
     throw new Error(`No models available for tier: ${tier}`);
   }
 
+  // Silent Research Enhancement Engine — user never sees enriched prompts.
+  const enhanced = enhanceAcademicPrompts({
+    toolId,
+    inputs,
+    systemPrompt,
+    userPrompt,
+  });
+
   const messages: OpenRouterMessage[] = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
+    { role: "system", content: enhanced.systemPrompt },
+    { role: "user", content: enhanced.userPrompt },
   ];
 
   let lastError: Error | null = null;
